@@ -9,9 +9,98 @@ import json
 import urllib.request
 import urllib.parse
 from datetime import datetime
+from io import BytesIO
 from typing import List, Dict, Optional
 from pydantic import BaseModel, Field
+import requests
+from PIL import Image
 from google import genai
+
+
+INDUSTRIAL_STOCK_LIBRARY: Dict[str, List[str]] = {
+    "digital_twin": [
+        "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80",
+    ],
+    "automation_robot": [
+        "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=1200&q=80",
+    ],
+    "control_dashboard": [
+        "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?auto=format&fit=crop&w=1200&q=80",
+    ],
+    "pcb_circuit": [
+        "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&q=80",
+    ],
+    "factory_plant": [
+        "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80",
+    ],
+    "engineering_team": [
+        "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80",
+    ],
+}
+
+
+def detect_industrial_category(context_text: str) -> str:
+    text = (context_text or "").lower()
+    if any(k in text for k in ["트윈", "시뮬레이션", "가상", "디지털", "twin", "simulation"]):
+        return "digital_twin"
+    if any(k in text for k in ["로봇", "자동화", "컨베이어", "공정", "조립", "robot", "automation"]):
+        return "automation_robot"
+    if any(k in text for k in ["모니터", "데이터", "대시보드", "관제", "mes", "erp", "분석", "dashboard"]):
+        return "control_dashboard"
+    if any(k in text for k in ["회로", "기판", "반도체", "pcb", "센서", "전자", "circuit"]):
+        return "pcb_circuit"
+    if any(k in text for k in ["팀", "컨설팅", "지원사업", "선정", "회의", "전략", "정부", "도입", "상담"]):
+        return "engineering_team"
+    return "factory_plant"
+
+
+def fetch_smart_stock_photo(
+    context_text: str,
+    output_path: str,
+    width: int = 970,
+    height: int = 600,
+    seed_idx: int = 0
+) -> str:
+    """
+    초고화질 실사 산업/제조 스톡 사진(Unsplash 정품)을 주제에 맞춰 매칭 및 리사이징하여 저장합니다.
+    만화/인형/왜곡 없이 실제 100% 사실적인 산업 현장 사진을 보장합니다.
+    """
+    cat = detect_industrial_category(context_text)
+    urls = INDUSTRIAL_STOCK_LIBRARY.get(cat, INDUSTRIAL_STOCK_LIBRARY["factory_plant"])
+    chosen_url = urls[seed_idx % len(urls)]
+
+    try:
+        resp = requests.get(chosen_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=12)
+        if resp.status_code == 200 and len(resp.content) > 10000:
+            img = Image.open(BytesIO(resp.content)).convert("RGB")
+            # 비율에 맞게 센터 크롭 후 리사이징
+            target_ratio = width / height
+            orig_ratio = img.width / img.height
+            if orig_ratio > target_ratio:
+                new_w = int(img.height * target_ratio)
+                off = (img.width - new_w) // 2
+                img = img.crop((off, 0, off + new_w, img.height))
+            else:
+                new_h = int(img.width / target_ratio)
+                off = (img.height - new_h) // 2
+                img = img.crop((0, off, img.width, off + new_h))
+            img = img.resize((width, height), Image.Resampling.LANCZOS)
+            os.makedirs(os.path.dirname(output_path) or "images", exist_ok=True)
+            img.save(output_path, "JPEG", quality=92)
+            return output_path
+    except Exception as e:
+        print(f"Stock fetch error ({cat}): {e}")
+
+    return output_path
 
 
 def generate_ai_image(
@@ -165,45 +254,41 @@ def generate_clip_plan_from_blog(
 
     imgs = downloaded_images or []
 
-    # 슬라이드 1: 블로그 1번 사진 우선, 없으면 AI 세로 이미지 생성
+    # 슬라이드 1: 블로그 1번 사진 우선, 없으면 대본 맞춤 실사 스톡 사진 매칭
     if len(imgs) > 0 and os.path.exists(imgs[0]):
         bg_img = imgs[0]
     else:
-        try:
-            p_p = plan.slide_1.image_prompt or "Photorealistic vertical shot of modern smart factory automation, 8k"
-            bg_img = generate_ai_image(p_p, width=1080, height=1920, output_path="images/ai_slide_1_bg.jpg")
-        except Exception:
-            bg_img = "images/slide1_bg.jpg"
+        ctx1 = f"{plan.slide_1.title} {plan.slide_1.subtitle} {plan.slide_1.narration}"
+        stock_path_1 = "images/stock_slide_1_bg.jpg"
+        fetch_smart_stock_photo(ctx1, stock_path_1, width=1080, height=1920, seed_idx=0)
+        bg_img = stock_path_1 if os.path.exists(stock_path_1) else "images/slide1_bg.jpg"
 
-    # 슬라이드 2: 블로그 2번 사진 우선, 없으면 AI 맞춤 이미지 생성
+    # 슬라이드 2: 블로그 2번 사진 우선, 없으면 대본 맞춤 실사 스톡 사진 매칭
     if len(imgs) > 1 and os.path.exists(imgs[1]):
         p1_img = imgs[1]
     else:
-        try:
-            p_p = plan.slide_2.image_prompt or "Photorealistic shot of Korean engineers working in smart manufacturing plant, 8k"
-            p1_img = generate_ai_image(p_p, width=970, height=600, output_path="images/ai_slide_2.jpg")
-        except Exception:
-            p1_img = "images/photo_1.png"
+        ctx2 = f"{plan.slide_2.title} {plan.slide_2.subtitle} {plan.slide_2.narration}"
+        stock_path_2 = "images/stock_slide_2.jpg"
+        fetch_smart_stock_photo(ctx2, stock_path_2, width=970, height=600, seed_idx=1)
+        p1_img = stock_path_2 if os.path.exists(stock_path_2) else "images/photo_1.png"
 
-    # 슬라이드 3: 블로그 3번 사진 우선, 없으면 AI 맞춤 이미지 생성
+    # 슬라이드 3: 블로그 3번 사진 우선, 없으면 대본 맞춤 실사 스톡 사진 매칭
     if len(imgs) > 2 and os.path.exists(imgs[2]):
         p2_img = imgs[2]
     else:
-        try:
-            p_p = plan.slide_3.image_prompt or "Photorealistic shot of modern manufacturing equipment and automation line, 8k"
-            p2_img = generate_ai_image(p_p, width=970, height=600, output_path="images/ai_slide_3.jpg")
-        except Exception:
-            p2_img = "images/photo_2.png"
+        ctx3 = f"{plan.slide_3.title} {plan.slide_3.subtitle} {plan.slide_3.narration}"
+        stock_path_3 = "images/stock_slide_3.jpg"
+        fetch_smart_stock_photo(ctx3, stock_path_3, width=970, height=600, seed_idx=2)
+        p2_img = stock_path_3 if os.path.exists(stock_path_3) else "images/photo_2.png"
 
-    # 슬라이드 4: 블로그 4번 사진이 있으면 사용, 없으면 1번 사진을 재탕하지 않고 대본에 맞춰 AI로 새 인물/장면을 즉시 생성!
+    # 슬라이드 4: 블로그 4번 사진 우선, 없으면 대본 맞춤 실사 스톡 사진 매칭
     if len(imgs) > 3 and os.path.exists(imgs[3]):
         p3_img = imgs[3]
     else:
-        try:
-            p_p = plan.slide_4.image_prompt or "Photorealistic shot of Korean factory team reviewing quality management checklist, 8k"
-            p3_img = generate_ai_image(p_p, width=970, height=600, output_path="images/ai_slide_4.jpg")
-        except Exception:
-            p3_img = imgs[0] if len(imgs) > 0 else "images/photo_3.png"
+        ctx4 = f"{plan.slide_4.title} {plan.slide_4.subtitle} {plan.slide_4.narration}"
+        stock_path_4 = "images/stock_slide_4.jpg"
+        fetch_smart_stock_photo(ctx4, stock_path_4, width=970, height=600, seed_idx=3)
+        p3_img = stock_path_4 if os.path.exists(stock_path_4) else (imgs[0] if len(imgs) > 0 else "images/photo_3.png")
 
     data_dict = {
         "project_name": plan.project_name or "clip_project",

@@ -41,7 +41,7 @@ from tts_engine import (
 )
 from video_maker import create_shortform_mp4
 from blog_scraper import fetch_naver_blog
-from ai_generator import generate_clip_plan_from_blog, generate_ai_image
+from ai_generator import generate_clip_plan_from_blog, generate_ai_image, fetch_smart_stock_photo
 
 st.set_page_config(
     page_title="네이버 클립 숏폼 올인원 스튜디오",
@@ -384,25 +384,26 @@ with st.expander("✏️ 슬라이드별 사진 교체 및 텍스트/대본 세�
                     s_cfg[img_key] = sel_blog_img
                     updated = True
 
-            # 대본 맞춤 AI 인물/장면 새로 그리기
-            if st.button(f"🎨 대본 맞춤 AI 사진 새로 그리기 (#{idx+1})", key=f"btn_ai_img_{idx}_{ver}", use_container_width=True):
-                with st.spinner(f"슬라이드 {idx+1} 대본 내용에 맞춰 AI가 새 인물/장면을 그리는 중입니다..."):
+            # 대본 맞춤 초고화질 실사 스톡 사진 적용 (만화/인형 왜곡 방지)
+            if st.button(f"📸 대본 맞춤 실사 사진 적용 (#{idx+1})", key=f"btn_stock_img_{idx}_{ver}", use_container_width=True):
+                with st.spinner(f"슬라이드 {idx+1} 주제에 맞는 초고화질 실사 스톡 사진을 적용 중입니다..."):
                     try:
                         w = 1080 if s_cfg.get("type") == "vertical_bg" else 970
                         h = 1920 if s_cfg.get("type") == "vertical_bg" else 600
                         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-                        ai_path = f"images/ai_slide_{idx+1}_{ts}.jpg"
-                        prompt = s_cfg.get("image_prompt") or f"Photorealistic cinematic shot of {s_cfg.get('title')}, {s_cfg.get('narration', '')[:60]}, Korean professional in smart factory, 8k"
-                        generate_ai_image(prompt, width=w, height=h, output_path=ai_path)
-                        s_cfg[img_key] = ai_path
-                        save_data_json(st.session_state.clip_data)
-                        s_paths, z_path = render_slides_from_config(st.session_state.clip_data, output_dir="output")
-                        st.session_state.slide_paths = s_paths
-                        st.session_state.zip_path = z_path
-                        st.toast(f"슬라이드 {idx+1}에 대본 맞춤 AI 사진이 적용되었습니다!", icon="🎨")
-                        st.rerun()
+                        stock_path = f"images/stock_slide_{idx+1}_{ts}.jpg"
+                        ctx = f"{s_cfg.get('title', '')} {s_cfg.get('subtitle', '')} {s_cfg.get('narration', '')}"
+                        fetch_smart_stock_photo(ctx, stock_path, width=w, height=h, seed_idx=idx + int(time.time()) % 5)
+                        if os.path.exists(stock_path):
+                            s_cfg[img_key] = stock_path
+                            save_data_json(st.session_state.clip_data)
+                            s_paths, z_path = render_slides_from_config(st.session_state.clip_data, output_dir="output")
+                            st.session_state.slide_paths = s_paths
+                            st.session_state.zip_path = z_path
+                            st.toast(f"슬라이드 {idx+1}에 고화질 실사 사진이 적용되었습니다!", icon="📸")
+                            st.rerun()
                     except Exception as e:
-                        st.error(f"AI 이미지 생성 실패: {e}")
+                        st.error(f"실사 사진 적용 실패: {e}")
 
             s_cfg["badge"] = st.text_input("상단 배지", value=s_cfg.get("badge", ""), key=f"badge_{idx}_{ver}")
             s_cfg["title"] = st.text_area("메인 제목", value=s_cfg.get("title", ""), height=68, key=f"title_{idx}_{ver}")
