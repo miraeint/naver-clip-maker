@@ -28,8 +28,13 @@ def generate_ai_image(
         ts = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:19]
         output_path = f"images/ai_gen_{ts}.jpg"
 
-    # 기존 블로그 사진들과 톤앤매너(쿨화이트 형광등 조명, 선명한 초점, 한국 현장 유니폼) 일치
-    style_anchor = "Sharp DSLR documentary photo, clean modern Korean manufacturing factory, bright cool-white fluorescent lighting, natural color balance, deep focus, sharp details, Korean engineers in uniform"
+    # 기존 블로그 사진들과 톤앤매너 일치 및 만화/애니메이션/피규어 철저 배제
+    style_anchor = (
+        "Professional industrial DSLR documentary photograph, authentic modern smart manufacturing plant, "
+        "industrial automation line, control room with dual monitors displaying digital twin simulation and 3D modeling, "
+        "bright cool-white fluorescent lighting, natural color balance, deep focus, ultra crisp 8k photorealistic. "
+        "Strictly avoid: NO anime, NO cartoon, NO 3d doll, NO figure, NO comic, NO illustration, NO CGI drawing, NO fake characters"
+    )
     refined_prompt = f"{style_anchor}, {prompt.strip()}"
     encoded_prompt = urllib.parse.quote(refined_prompt)
     seed = int(time.time() * 1000) % 100000
@@ -112,8 +117,9 @@ def generate_clip_plan_from_blog(
 5. 각 텍스트는 모바일 세로 화면(1080x1920) 카드 안에 깔끔하게 들어가도록 간결하고 임팩트 있게 작성하세요.
 6. image_prompt 작성 규칙 (슬라이드별 주제 100% 동적 맞춤):
    - 고정된 장면이 아니라, 각 슬라이드의 메인 제목(title), 서브 제목(subtitle), 대본(narration)의 핵심 주제와 키워드를 1:1로 반영하여 매번 완전히 새로운 장면 프롬프트를 작성하세요.
-   - 휑하고 의미 없는 빈 복도나 빈 창고(empty warehouse/corridor)를 절대 묘사하지 말고, 해당 슬라이드의 주제(예: ERP 전산 입력, 품질 검사, 장비 가공, 안전 점검, 실무 회의 등)에 맞는 구체적인 행동을 수행하는 단정한 한국인 전문가 또는 설비 가동 장면을 묘사하세요.
-   - 시각적 결(톤앤매너): 밝고 선명한 쿨화이트 조명(bright cool-white industrial lighting), 깊고 선명한 초점(deep focus, sharp details), 단정한 복장의 한국인 전문가, 사실적인 다큐멘터리 사진 스타일 (노란색 빈티지 필터, 과도한 보케, 텍스트/도표 그래픽 금지).
+   - 만화(anime), 카툰, 피규어/인형, 3D 애니메이션 스타일은 절대로 나오지 않아야 합니다.
+   - 인물 중심보다는 '실제 공장 자동화 라인, 산업용 로봇, 제어실 모니터 시뮬레이션 화면, 설비 배치 3D 디지털 트윈 화면, 정밀 설비 가동 모습' 등 전문적이고 신뢰감 있는 실제 산업 다큐멘터리 사진(Professional real-world DSLR photo)으로 프롬프트를 작성하세요.
+   - 시각적 결(톤앤매너): 밝고 선명한 쿨화이트 산업용 조명, 깊고 선명한 초점, 실제 제조 설비 및 엔지니어링 환경.
 
 [블로그 본문 내용]
 {blog_text[:8000]}
