@@ -18,6 +18,21 @@ from google import genai
 
 
 INDUSTRIAL_STOCK_LIBRARY: Dict[str, List[str]] = {
+    "edge_iot": [
+        "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1563770660941-20978e870e26?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&q=80",
+    ],
+    "cloud_server": [
+        "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
+    ],
+    "safety_control": [
+        "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80",
+    ],
     "digital_twin": [
         "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80",
         "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1200&q=80",
@@ -50,15 +65,21 @@ INDUSTRIAL_STOCK_LIBRARY: Dict[str, List[str]] = {
 
 def detect_industrial_category(context_text: str) -> str:
     text = (context_text or "").lower()
+    if any(k in text for k in ["비상", "정지", "이상", "골든타임", "위험", "파손", "중단", "안전", "감지", "emergency", "stop"]):
+        return "safety_control"
+    if any(k in text for k in ["클라우드", "아키텍처", "분업", "서버", "네트워크", "전송", "대역폭", "cloud", "server"]):
+        return "cloud_server"
+    if any(k in text for k in ["엣지", "즉시 계산", "현장 처리", "게이트웨이", "센서", "연산", "edge", "iot"]):
+        return "edge_iot"
     if any(k in text for k in ["트윈", "시뮬레이션", "가상", "디지털", "twin", "simulation"]):
         return "digital_twin"
     if any(k in text for k in ["로봇", "자동화", "컨베이어", "공정", "조립", "robot", "automation"]):
         return "automation_robot"
     if any(k in text for k in ["모니터", "데이터", "대시보드", "관제", "mes", "erp", "분석", "dashboard"]):
         return "control_dashboard"
-    if any(k in text for k in ["회로", "기판", "반도체", "pcb", "센서", "전자", "circuit"]):
+    if any(k in text for k in ["회로", "기판", "반도체", "pcb", "전자", "circuit"]):
         return "pcb_circuit"
-    if any(k in text for k in ["팀", "컨설팅", "지원사업", "선정", "회의", "전략", "정부", "도입", "상담"]):
+    if any(k in text for k in ["팀", "컨설팅", "지원사업", "선정", "회의", "전략", "정부", "상담"]):
         return "engineering_team"
     return "factory_plant"
 
@@ -68,21 +89,36 @@ def fetch_smart_stock_photo(
     output_path: str,
     width: int = 970,
     height: int = 600,
-    seed_idx: int = 0
+    seed_idx: int = 0,
+    used_urls: Optional[set] = None
 ) -> str:
     """
-    초고화질 실사 산업/제조 스톡 사진(Unsplash 정품)을 주제에 맞춰 매칭 및 리사이징하여 저장합니다.
-    만화/인형/왜곡 없이 실제 100% 사실적인 산업 현장 사진을 보장합니다.
+    초고화질 실사 산업/제조 스톡 사진(Unsplash 정품)을 슬라이드 제목/내용에 맞춰 매칭 및 저장합니다.
+    슬라이드 간 사진 중복을 원천 방지합니다.
     """
     cat = detect_industrial_category(context_text)
-    urls = INDUSTRIAL_STOCK_LIBRARY.get(cat, INDUSTRIAL_STOCK_LIBRARY["factory_plant"])
-    chosen_url = urls[seed_idx % len(urls)]
+    candidates = list(INDUSTRIAL_STOCK_LIBRARY.get(cat, INDUSTRIAL_STOCK_LIBRARY["factory_plant"]))
+
+    # 모든 카테고리의 전체 풀을 후순위로 연결하여 중복 절대 방지
+    for other_cat, other_urls in INDUSTRIAL_STOCK_LIBRARY.items():
+        if other_cat != cat:
+            for u in other_urls:
+                if u not in candidates:
+                    candidates.append(u)
+
+    chosen_url = candidates[seed_idx % len(candidates)]
+    if used_urls is not None:
+        for idx_offset in range(len(candidates)):
+            cand = candidates[(seed_idx + idx_offset) % len(candidates)]
+            if cand not in used_urls:
+                chosen_url = cand
+                break
+        used_urls.add(chosen_url)
 
     try:
         resp = requests.get(chosen_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=12)
         if resp.status_code == 200 and len(resp.content) > 10000:
             img = Image.open(BytesIO(resp.content)).convert("RGB")
-            # 비율에 맞게 센터 크롭 후 리사이징
             target_ratio = width / height
             orig_ratio = img.width / img.height
             if orig_ratio > target_ratio:
@@ -110,28 +146,14 @@ def generate_ai_image(
     output_path: Optional[str] = None
 ) -> str:
     """
-    슬라이드 나레이션/상황에 맞춘 인물 및 장면 이미지를 실제 제조 현장 사진 톤에 맞춰 선명하게 생성합니다.
+    기존 함수 호환용 래퍼: 외부 저품질 AI(402 에러) 대신 검증된 고화질 실사 스톡 사진을 즉시 매칭합니다.
     """
     os.makedirs("images", exist_ok=True)
     if not output_path:
         ts = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:19]
-        output_path = f"images/ai_gen_{ts}.jpg"
-
-    # 기존 블로그 사진들과 톤앤매너 일치 및 만화/애니메이션/피규어 철저 배제
-    style_anchor = (
-        "Professional industrial DSLR documentary photograph, authentic modern smart manufacturing plant, "
-        "industrial automation line, control room with dual monitors displaying digital twin simulation and 3D modeling, "
-        "bright cool-white fluorescent lighting, natural color balance, deep focus, ultra crisp 8k photorealistic. "
-        "Strictly avoid: NO anime, NO cartoon, NO 3d doll, NO figure, NO comic, NO illustration, NO CGI drawing, NO fake characters"
-    )
-    refined_prompt = f"{style_anchor}, {prompt.strip()}"
-    encoded_prompt = urllib.parse.quote(refined_prompt)
-    seed = int(time.time() * 1000) % 100000
-    url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&model=flux&nologo=true&seed={seed}"
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
-    with urllib.request.urlopen(req, timeout=40) as resp, open(output_path, "wb") as f:
-        f.write(resp.read())
-    return output_path
+        output_path = f"images/stock_gen_{ts}.jpg"
+    seed = int(time.time()) % 10
+    return fetch_smart_stock_photo(prompt, output_path, width=width, height=height, seed_idx=seed)
 
 
 class Slide1Spec(BaseModel):
@@ -253,42 +275,47 @@ def generate_clip_plan_from_blog(
         raise RuntimeError(f"모든 AI 모델 연결 시도 실패 (마지막 오류: {last_err})")
 
     imgs = downloaded_images or []
+    used_stock_urls: set = set()
+    ts_tag = datetime.now().strftime("%H%M%S")
 
     # 슬라이드 1: 블로그 1번 사진 우선, 없으면 대본 맞춤 실사 스톡 사진 매칭
     if len(imgs) > 0 and os.path.exists(imgs[0]):
         bg_img = imgs[0]
     else:
         ctx1 = f"{plan.slide_1.title} {plan.slide_1.subtitle} {plan.slide_1.narration}"
-        stock_path_1 = "images/stock_slide_1_bg.jpg"
-        fetch_smart_stock_photo(ctx1, stock_path_1, width=1080, height=1920, seed_idx=0)
+        stock_path_1 = f"images/stock_slide_1_{ts_tag}.jpg"
+        fetch_smart_stock_photo(ctx1, stock_path_1, width=1080, height=1920, seed_idx=0, used_urls=used_stock_urls)
         bg_img = stock_path_1 if os.path.exists(stock_path_1) else "images/slide1_bg.jpg"
 
     # 슬라이드 2: 블로그 2번 사진 우선, 없으면 대본 맞춤 실사 스톡 사진 매칭
     if len(imgs) > 1 and os.path.exists(imgs[1]):
         p1_img = imgs[1]
     else:
-        ctx2 = f"{plan.slide_2.title} {plan.slide_2.subtitle} {plan.slide_2.narration}"
-        stock_path_2 = "images/stock_slide_2.jpg"
-        fetch_smart_stock_photo(ctx2, stock_path_2, width=970, height=600, seed_idx=1)
+        b2_str = " ".join(" ".join(b) for b in plan.slide_2.bullets)
+        ctx2 = f"{plan.slide_2.title} {plan.slide_2.subtitle} {b2_str} {plan.slide_2.narration}"
+        stock_path_2 = f"images/stock_slide_2_{ts_tag}.jpg"
+        fetch_smart_stock_photo(ctx2, stock_path_2, width=970, height=600, seed_idx=1, used_urls=used_stock_urls)
         p1_img = stock_path_2 if os.path.exists(stock_path_2) else "images/photo_1.png"
 
     # 슬라이드 3: 블로그 3번 사진 우선, 없으면 대본 맞춤 실사 스톡 사진 매칭
     if len(imgs) > 2 and os.path.exists(imgs[2]):
         p2_img = imgs[2]
     else:
-        ctx3 = f"{plan.slide_3.title} {plan.slide_3.subtitle} {plan.slide_3.narration}"
-        stock_path_3 = "images/stock_slide_3.jpg"
-        fetch_smart_stock_photo(ctx3, stock_path_3, width=970, height=600, seed_idx=2)
+        b3_str = " ".join(" ".join(b) for b in plan.slide_3.bullets)
+        ctx3 = f"{plan.slide_3.title} {plan.slide_3.subtitle} {b3_str} {plan.slide_3.narration}"
+        stock_path_3 = f"images/stock_slide_3_{ts_tag}.jpg"
+        fetch_smart_stock_photo(ctx3, stock_path_3, width=970, height=600, seed_idx=2, used_urls=used_stock_urls)
         p2_img = stock_path_3 if os.path.exists(stock_path_3) else "images/photo_2.png"
 
-    # 슬라이드 4: 블로그 4번 사진 우선, 없으면 대본 맞춤 실사 스톡 사진 매칭
+    # 슬라이드 4: 블로그 4번 사진 우선, 없으면 1번 사진을 중복 재탕하지 않고 고유 실사 스톡 사진 매칭!
     if len(imgs) > 3 and os.path.exists(imgs[3]):
         p3_img = imgs[3]
     else:
-        ctx4 = f"{plan.slide_4.title} {plan.slide_4.subtitle} {plan.slide_4.narration}"
-        stock_path_4 = "images/stock_slide_4.jpg"
-        fetch_smart_stock_photo(ctx4, stock_path_4, width=970, height=600, seed_idx=3)
-        p3_img = stock_path_4 if os.path.exists(stock_path_4) else (imgs[0] if len(imgs) > 0 else "images/photo_3.png")
+        b4_str = " ".join(" ".join(b) for b in plan.slide_4.bullets)
+        ctx4 = f"{plan.slide_4.title} {plan.slide_4.subtitle} {b4_str} {plan.slide_4.narration}"
+        stock_path_4 = f"images/stock_slide_4_{ts_tag}.jpg"
+        fetch_smart_stock_photo(ctx4, stock_path_4, width=970, height=600, seed_idx=3, used_urls=used_stock_urls)
+        p3_img = stock_path_4 if os.path.exists(stock_path_4) else "images/photo_3.png"
 
     data_dict = {
         "project_name": plan.project_name or "clip_project",

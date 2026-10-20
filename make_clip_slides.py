@@ -72,37 +72,16 @@ def ensure_sample_images(data: Dict) -> None:
         os.makedirs(os.path.dirname(img_path) or "images", exist_ok=True)
 
         if slide.get("type") == "vertical_bg":
-            # 1080x1920 스마트공장 다크 테크 배경 생성
+            # 1080x1920 다크 테크 배경 생성 (네트워크 오프라인 시 기본 배경)
             im = Image.new("RGB", (WIDTH, HEIGHT), (12, 20, 38))
             dr = ImageDraw.Draw(im)
             for y in range(0, HEIGHT, 60):
                 dr.line([(0, y), (WIDTH, y)], fill=(22, 36, 62), width=1)
             for x in range(0, WIDTH, 60):
                 dr.line([(x, 0), (x, HEIGHT)], fill=(22, 36, 62), width=1)
-
-            # 중앙 영역(500~1220)에 스마트공장 실시간 모니터링 대시보드 그래픽 배치
-            dr.rounded_rectangle([(80, 560), (1000, 1180)], radius=28, fill=(18, 30, 54), outline=(56, 189, 248), width=3)
-            dr.text((130, 605), "LIVE SMART FACTORY SPC MONITOR", font=f_label, fill=(56, 189, 248))
-            dr.line([(130, 665), (950, 665)], fill=(239, 68, 68), width=2)  # UCL
-            dr.text((850, 632), "UCL (상한선)", font=f_small, fill=(248, 113, 113))
-            dr.line([(130, 860), (950, 860)], fill=(52, 211, 153), width=2)  # CL
-            dr.text((860, 827), "CL (중심선)", font=f_small, fill=(52, 211, 153))
-            dr.line([(130, 1055), (950, 1055)], fill=(239, 68, 68), width=2)  # LCL
-            dr.text((850, 1065), "LCL (하한선)", font=f_small, fill=(248, 113, 113))
-
-            pts = [
-                (140, 880), (225, 830), (310, 870), (395, 810),
-                (480, 845), (565, 770), (650, 730), (735, 695), (815, 665)
-            ]
-            dr.line(pts, fill=(56, 189, 248), width=5)
-            for px, py in pts[:-1]:
-                dr.ellipse([(px - 8, py - 8), (px + 8, py + 8)], fill=(56, 189, 248), outline=(255, 255, 255), width=2)
-            # 마지막 경고 포인트
-            lx, ly = pts[-1]
-            dr.ellipse([(lx - 14, ly - 14), (lx + 14, ly + 14)], fill=(239, 68, 68), outline=(255, 255, 255), width=3)
             im.save(img_path, quality=95)
         else:
-            # 970x600 카드용 고해상도 인포그래픽 샘플 사진 생성
+            # 970x600 카드용 깔끔한 추상 테크 그리드 배경 (특정 주제 텍스트/그래프 배제)
             pw, ph = 970, 600
             im = Image.new("RGB", (pw, ph), (18, 28, 48))
             dr = ImageDraw.Draw(im)
@@ -112,52 +91,16 @@ def ensure_sample_images(data: Dict) -> None:
                 dr.line([(x, 0), (x, ph)], fill=(28, 42, 68), width=1)
 
             h_color = tuple(slide.get("highlight_color", [56, 189, 248]))
-            dr.rounded_rectangle([(40, 40), (pw - 40, ph - 40)], radius=20, fill=(15, 23, 42), outline=h_color, width=3)
-
-            if idx == 2:
-                dr.text((80, 75), "SPC Control Chart (관리도 조기 경보 원리)", font=f_label, fill=h_color)
-                dr.line([(80, 170), (890, 170)], fill=(239, 68, 68), width=3)
-                dr.text((745, 132), "UCL (관리상한선)", font=f_small, fill=(248, 113, 113))
-                dr.line([(80, 320), (890, 320)], fill=(148, 163, 184), width=2)
-                dr.text((755, 285), "CL (평균 중심선)", font=f_small, fill=(203, 213, 225))
-                dr.line([(80, 470), (890, 470)], fill=(239, 68, 68), width=3)
-                dr.text((745, 480), "LCL (관리하한선)", font=f_small, fill=(248, 113, 113))
-
-                pts = [(110, 340), (210, 300), (310, 330), (410, 290), (510, 260), (610, 225), (710, 195), (810, 180)]
-                dr.line(pts, fill=h_color, width=5)
-                for px, py in pts:
-                    dr.ellipse([(px - 8, py - 8), (px + 8, py + 8)], fill=h_color, outline=(255, 255, 255), width=2)
-                dr.rounded_rectangle([(620, 210), (875, 265)], radius=10, fill=(239, 68, 68))
-                dr.text((640, 224), "불량 발생 전 이상 감지!", font=f_small, fill=(255, 255, 255))
-            elif idx == 3:
-                dr.text((80, 75), "시간대별 공정 편차 분석 (특정 구간 흔들림 적발)", font=f_label, fill=h_color)
-                bars = [45, 50, 48, 52, 165, 190, 175, 50, 46, 49]
-                times = ["09시", "10시", "11시", "12시", "13시", "14시", "15시", "16시", "17시", "18시"]
-                for i, (bh, t_str) in enumerate(zip(bars, times)):
-                    bx1 = 90 + i * 80
-                    by2 = 460
-                    by1 = by2 - bh * 1.5
-                    b_col = (239, 68, 68) if bh > 100 else h_color
-                    dr.rounded_rectangle([(bx1, by1), (bx1 + 48, by2)], radius=6, fill=b_col)
-                    dr.text((bx1, by2 + 15), t_str, font=f_small, fill=(203, 213, 225))
-            else:
-                # 디지털 트윈 & 스마트 데이터 그리드 시각화 씬 그래픽
-                dr.rounded_rectangle([(60, 60), (pw - 60, ph - 60)], radius=16, fill=(16, 24, 40), outline=h_color, width=2)
-                for i in range(12):
-                    lx = 100 + i * 70
-                    dr.line([(lx, 100), (lx, ph - 100)], fill=(30, 48, 80), width=1)
-                for j in range(8):
-                    ly = 100 + j * 50
-                    dr.line([(100, ly), (pw - 100, ly)], fill=(30, 48, 80), width=1)
-                node_pts = [
-                    (180, 200), (320, 280), (460, 220), (600, 310), (740, 250),
-                    (250, 380), (390, 450), (530, 390), (670, 460), (810, 400)
-                ]
-                for p1, p2 in zip(node_pts[:-1], node_pts[1:]):
-                    dr.line([p1, p2], fill=h_color, width=3)
-                for nx, ny in node_pts:
-                    dr.ellipse([(nx - 10, ny - 10), (nx + 10, ny + 10)], fill=h_color, outline=(255, 255, 255), width=2)
-                    dr.ellipse([(nx - 18, ny - 18), (nx + 18, ny + 18)], outline=h_color, width=1)
+            dr.rounded_rectangle([(60, 60), (pw - 60, ph - 60)], radius=16, fill=(16, 24, 40), outline=h_color, width=2)
+            node_pts = [
+                (180, 200), (320, 280), (460, 220), (600, 310), (740, 250),
+                (250, 380), (390, 450), (530, 390), (670, 460), (810, 400)
+            ]
+            for p1, p2 in zip(node_pts[:-1], node_pts[1:]):
+                dr.line([p1, p2], fill=h_color, width=3)
+            for nx, ny in node_pts:
+                dr.ellipse([(nx - 10, ny - 10), (nx + 10, ny + 10)], fill=h_color, outline=(255, 255, 255), width=2)
+                dr.ellipse([(nx - 18, ny - 18), (nx + 18, ny + 18)], outline=h_color, width=1)
 
             im.save(img_path, quality=95)
 
