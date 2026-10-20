@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.venv/
+env/
+venv/
+ENV/
+
+# Environment Variables & Secrets (CRITICAL)
+.env
+.env.local
+
+# Output files & generated media
+output/
+images/custom_*
+images/ai_*
+images/test_*
+images/*matched*
+*.mp4
+*.wav
+*.zip
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,135 @@
+{
+  "project_name": "smart_factory_level_guide",
+  "font_bold": "font/bold.ttf",
+  "font_regular": "font/regular.ttf",
+  "slides": [
+    {
+      "type": "vertical_bg",
+      "bg_image": "images/blog/blog_img_1.jpg",
+      "badge": "[30초 스마트공장 지식]",
+      "title": "우리 공장 레벨은?\n수준확인 완벽정리",
+      "subtitle": "정부지원사업 필수 통과 관문",
+      "card_badge": "[ 핵심 체크 ]",
+      "bullets": [
+        [
+          "▶ ",
+          "정부 기준 디지털화 객관적 측정"
+        ],
+        [
+          "▶ ",
+          "기초부터 레벨 4까지 5단계 구분"
+        ],
+        [
+          "▶ ",
+          "대부분 중소 제조사는 레벨1 수준"
+        ],
+        [
+          "▶ ",
+          "지원사업 신청 시 선정 당락 결정"
+        ]
+      ],
+      "cta": "▼ 30초 만에 핵심 개념 완벽 정리 시작",
+      "narration": "우리 공장은 과연 스마트공장 몇 단계일까요? 정부지원사업의 핵심 관문인 수준확인 제도와 레벨별 기준을 30초 만에 완벽히 정리해 드립니다.",
+      "image_prompt": "A modern Korean manufacturing plant interior, vertical 9:16 aspect ratio. A clean-shaven Korean male engineer in his 30s wearing a neat navy blue work uniform, holding an industrial tablet PC and inspecting automated assembly lines. Bright cool-white industrial lighting, crisp sharp focus, deep depth of field. High-tech smart factory atmosphere with robotic arms and conveyor belts in the background. Photorealistic, clean realistic factory photo, no warm vintage filters, no bokeh blur."
+    },
+    {
+      "type": "standard_card",
+      "photo": "images/blog/blog_img_2.jpg",
+      "badge": "[핵심 개념]",
+      "title": "스마트공장 레벨 기준",
+      "subtitle": "기초 단계부터 고도화 레벨4까지",
+      "highlight_color": [
+        56,
+        189,
+        248
+      ],
+      "card_badge": "[ 단계별 디지털화 수준 ]",
+      "bullets": [
+        [
+          "▶ ",
+          "기초~레벨1",
+          "• 수기 작성 탈피 및 바코드 센서 집계"
+        ],
+        [
+          "▶ ",
+          "레벨2~레벨3",
+          "• 설비 데이터 실시간 수집 및 공정 연계"
+        ],
+        [
+          "▶ ",
+          "레벨4 고도화",
+          "• AI 기반 설비 자율 최적화 및 제어"
+        ]
+      ],
+      "cta": "▼ 다음 장에서 실무 검증 사례 확인",
+      "narration": "스마트공장은 수기와 바코드 중심의 기초 단계부터, 실시간 수집의 레벨2, 데이터 연계의 레벨3, 그리고 AI가 스스로 최적화하는 레벨4 고도화까지 체계적으로 분류됩니다.",
+      "image_prompt": "A horizontal 16:9 shot of a clean Korean automated electronics factory floor. A clean-shaven Korean technician in grey industrial uniform checking a digital touch terminal mounted on an automated production line. Bright cool-white fluorescent lighting, sharp focus throughout, deep depth of field. Highly organized factory layout with modern machinery and status indicator lights. Authentic industrial photography style, no text, no blur."
+    },
+    {
+      "type": "standard_card",
+      "photo": "images/blog/blog_img_3.jpg",
+      "badge": "[현장 실무 사례]",
+      "title": "로그 데이터의 힘",
+      "subtitle": "설비 가동 데이터 3개월의 차이",
+      "highlight_color": [
+        52,
+        211,
+        153
+      ],
+      "card_badge": "[ 현장 데이터 도입 효과 ]",
+      "bullets": [
+        [
+          "1. ",
+          "객관적 입증",
+          "• MES 가동률 3개월 축적으로 레벨2 근접"
+        ],
+        [
+          "2. ",
+          "탈락 위험 방지",
+          "• 수기 기록 한계 극복 및 정량 평가 확보"
+        ],
+        [
+          "3. ",
+          "심사 서류 단축",
+          "• 검증된 수치로 사업계획서 작성 가속"
+        ]
+      ],
+      "cta": "▼ 다음 장에서 실무 필수 체크포인트 확인",
+      "narration": "아무리 현장이 원활해도 데이터가 없으면 낮은 평가를 받습니다. MES 설비 가동 데이터를 단 3개월만 축적해도 레벨2 진입을 객관적으로 입증할 수 있습니다.",
+      "image_prompt": "A horizontal 16:9 view of a modern Korean precision machining workshop. A professional Korean plant manager in a spotless work jacket reviewing production log data on a rugged industrial laptop near CNC machines. Bright cool-white warehouse lighting, clear sharp focus, deep depth of field. Clean metallic factory background, realistic operational environment, no heavy filters, no artistic blur."
+    },
+    {
+      "type": "standard_card",
+      "photo": "images/slide4_strategy_matched.jpg",
+      "badge": "[실무 팁]",
+      "title": "지원사업 합격 전략",
+      "subtitle": "수준확인 사전 준비 3단계",
+      "highlight_color": [
+        251,
+        191,
+        36
+      ],
+      "card_badge": "[ 실무 적용 가이드 ]",
+      "bullets": [
+        [
+          "▶ ",
+          "현재 레벨 파악",
+          "• 무리한 목표 대신 현실적 한 단계 상승"
+        ],
+        [
+          "▶ ",
+          "핵심 데이터 축적",
+          "• 바코드 센서 및 MES 로그 사전 확보"
+        ],
+        [
+          "▶ ",
+          "정부 공고 연계",
+          "• 수준확인 사전 완료로 심사 가점 확보"
+        ]
+      ],
+      "cta": "▼ 자세한 내용은 하단 블로그 링크 클릭",
+      "narration": "현재 수준을 객관적으로 파악하고 한 단계 끌어올리는 현실적인 계획을 세우세요. 수준확인을 미리 준비하면 지원사업 선정 확률이 크게 높아집니다. 더 상세한 가이드는 하단 블로그 링크를 확인하세요.",
+      "image_prompt": "A horizontal 16:9 view of two neat Korean industrial engineers, clean-shaven and wearing clean navy industrial uniforms, collaborating beside an automated conveyor inspection station in a high-tech smart factory. Bright cool-white industrial lighting, exceptionally sharp focus, deep depth of field. Professional engineering environment, realistic industrial photography, no graphics, no vintage tone."
+    }
+  ]
+}
