@@ -20,6 +20,15 @@ load_dotenv(".env")
 if not os.getenv("GEMINI_API_KEY") and os.path.exists("../TEST11/.env"):
     load_dotenv("../TEST11/.env")
 
+# Streamlit Community Cloud의 st.secrets 지원
+try:
+    if "GEMINI_API_KEY" in st.secrets and not os.getenv("GEMINI_API_KEY"):
+        os.environ["GEMINI_API_KEY"] = str(st.secrets["GEMINI_API_KEY"]).strip()
+    if "APP_PASSWORD" in st.secrets and not os.getenv("APP_PASSWORD"):
+        os.environ["APP_PASSWORD"] = str(st.secrets["APP_PASSWORD"]).strip()
+except Exception:
+    pass
+
 from make_clip_slides import render_slides_from_config, ensure_fonts, ensure_sample_images
 from tts_engine import (
     AVAILABLE_VOICES,
